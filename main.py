@@ -12,7 +12,6 @@ md_directory = [f for f in os.scandir("md/") if f.is_file()]
 
 n = 0
 while n < len(md_directory):
-    # md_directory = [f for f in os.scandir("md/") if f.is_file()]
     md_file = open(md_directory[n], "r", encoding="utf-8")
     md_file.seek(0)  # откат каретки
     for md_string in md_file:
@@ -23,6 +22,7 @@ while n < len(md_directory):
         if "Серия:" in md_string:
             seriya = md_string
             seriya = seriya.replace("Серия: ", "").replace("№", "No: ")
+
             # Данная часть кода работает засчёт модуля re
             # и на выходе даёт переменную nums, которая содержит номер серии,
             # выраженный отдельным числом:
@@ -55,9 +55,9 @@ while n < len(md_directory):
         else:
             tags = "no_tags"
 
-    # --------------------------------------------------
-    # maker
-    # --------------------------------------------------
+# --------------------------------------------------
+# maker
+# --------------------------------------------------
 
     # В данном случае задействован метод split(), позволяющий трансформировать
     # строку в список. В качестве "разделителя" указан "&":
