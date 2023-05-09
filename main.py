@@ -1,3 +1,6 @@
+#!/bin/python
+
+from Markdown2docx import Markdown2docx
 from pathlib import Path
 import os
 import subprocess
@@ -8,7 +11,8 @@ import re
 # Конструкция, которая позволяет просканировать выбранную директорию и
 # создать список, в котором содержатся только файлы.
 
-md_directory = [f for f in os.scandir("md/") if f.is_file()]
+md_directory = [f for f in os.scandir(".") if f.is_file()]
+# md_directory = [f for f in os.scandir("md/") if f.is_file()]
 
 n = 0
 while n < len(md_directory):
@@ -49,15 +53,15 @@ while n < len(md_directory):
             date = date.split(".")[::-1]
             date = "-".join(date)
 
-        if "Теги:" in md_string:
+        if "Теги: " in md_string:
             tags = md_string
             tags = tags.replace("Теги: ", "")
-        else:
-            tags = "no_tags"
+        # else:
+        #     tags = "no_tags"
 
-# --------------------------------------------------
-# maker
-# --------------------------------------------------
+    # --------------------------------------------------
+    # maker
+    # --------------------------------------------------
 
     # В данном случае задействован метод split(), позволяющий трансформировать
     # строку в список. В качестве "разделителя" указан "&":
@@ -79,8 +83,8 @@ while n < len(md_directory):
         authors_reversed.append(reversed_author)
 
     opf_file_name = md_file.name.replace("md/", "").replace(".md", ".opf")
-    opf_file = open(("opf/" + opf_file_name), "w+")
-    opf_head = open("head.opf", "r")
+    opf_file = open(("./" + opf_file_name), "w+")
+    opf_head = open("/home/vostorg/sandbox/python/parser/head.opf", "r")
 
     # Добавление "шапки"
     opf_file.write(opf_head.read())
@@ -105,7 +109,7 @@ while n < len(md_directory):
         )
         i = i + 1
 
-    contribution = open("contribution.opf", "r")
+    contribution = open("/home/vostorg/sandbox/python/parser/contribution.opf", "r")
     opf_file.write(contribution.read())
     contribution.close()
 
@@ -208,3 +212,28 @@ while n < len(md_directory):
 
 md_file.close()
 opf_file.close()
+
+
+# Секция, отвечающая за конвертацию .md в .docx:
+
+directory = "./"
+
+md_files_list = []
+for file in os.listdir(directory):
+    if os.path.isfile(os.path.join(directory, file)) and file.endswith(".md"):
+        md_files_list.append(file)
+
+
+for file in md_files_list:
+    project = Markdown2docx(directory + file.replace(".md", ""))
+    project.eat_soup()
+    project.save()
+
+
+# ----------------------------------------------------------------------------
+# Следующим шагом нужно попробовать сделать парсер, который забирает данные из
+# .docx файлов. Так же следует не забывать о том, что нужно реализовать функцию
+# переименования файлов. Как исходных, так и генерируемых. Сделать это нужно в
+# точности так же, как это делается в calibre. Далее же необходимо приступить
+# адаптации под более, так сказать, широкую аудиторию.
+# ----------------------------------------------------------------------------
