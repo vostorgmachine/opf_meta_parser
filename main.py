@@ -78,8 +78,8 @@ while n < len(md_directory):
 
     authors_reversed = []
     for each_author in authors_list:
-        splitted_author = each_author.split()[::-1]
-        reversed_author = splitted_author[0] + ", " + splitted_author[1]
+        splitted_author = each_author.split()
+        reversed_author = splitted_author[-1] + ", " + splitted_author[0]
         authors_reversed.append(reversed_author)
 
     opf_file_name = md_file.name.replace("md/", "").replace(".md", ".opf")
