@@ -21,8 +21,6 @@ while n < len(md_directory):
         if "##" in md_string:
             title = md_string
             title = title.strip("## ").strip("\n")
-            print("title:")
-            print(title)
             md_file.seek(0)
             break
 
@@ -40,25 +38,19 @@ while n < len(md_directory):
             nums = [int(i) for i in nums]
             seriya_num = nums
             md_file.seek(0)
-
-            print("seriya:")
-            print(seriya)
-            md_file.seek(0)
             break
 
     for md_string in md_file:
 
         if "Автор(ы):" in md_string:
             authors = md_string.replace("Автор(ы): ", "")
-            print("authors:")
-            print(authors)
             md_file.seek(0)
             break
 
-        # else:
-        #     authors = "Неизвестный"
-        #     md_file.seek(0)
-        #     break
+        else:
+            authors = "Неизвестный"
+            md_file.seek(0)
+            break
 
         # В данном случае происходит забор строки, далее она "очищается" от
         # ненужных символов, после чего конвертируется в список, который, в
@@ -113,7 +105,7 @@ while n < len(md_directory):
     opf_file_name = md_file.name.replace("md/", "").replace(".md", ".opf")
 
     opf_file = open(("./" + opf_file_name), "w+")
-    opf_head = open("/home/vostorg/sandbox/python/parser/head.opf", "r")
+    opf_head = open("/home/vostorg/sandbox/python/opf_meta_parser/head.opf", "r")
 
     # Добавление "шапки"
     opf_file.write(opf_head.read())
@@ -142,7 +134,7 @@ while n < len(md_directory):
             )
             i = i + 1
 
-    contribution = open("/home/vostorg/sandbox/python/parser/contribution.opf", "r")
+    contribution = open("/home/vostorg/sandbox/python/opf_meta_parser/contribution.opf", "r")
     opf_file.write(contribution.read())
     contribution.close()
 
