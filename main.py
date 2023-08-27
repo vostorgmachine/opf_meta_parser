@@ -1,5 +1,6 @@
 #!/bin/python
 
+import glob
 from Markdown2docx import Markdown2docx
 from pathlib import Path
 import os
@@ -7,25 +8,29 @@ import subprocess
 import markdown
 import re
 
-
-# Конструкция, которая позволяет просканировать выбранную директорию и
-# создать список, в котором содержатся только файлы.
-
-md_directory = [f for f in os.scandir(".") if f.is_file()]
-# md_directory = [f for f in os.scandir("md/") if f.is_file()]
+md_directory = glob.glob("*.md")
 
 n = 0
+
 while n < len(md_directory):
+
     md_file = open(md_directory[n], "r", encoding="utf-8")
-    md_file.seek(0)  # откат каретки
+
     for md_string in md_file:
+
         if "##" in md_string:
             title = md_string
-            title = title.replace("## ", "").replace("\n", "")
+            title = title.strip("## ").strip("\n")
+            print("title:")
+            print(title)
+            md_file.seek(0)
+            break
+
+    for md_string in md_file:
 
         if "Серия:" in md_string:
             seriya = md_string
-            seriya = seriya.replace("Серия: ", "").replace("№", "No: ")
+            seriya = seriya.strip("Серия: ").replace("№", "No: ")
 
             # Данная часть кода работает засчёт модуля re
             # и на выходе даёт переменную nums, которая содержит номер серии,
@@ -34,37 +39,60 @@ while n < len(md_directory):
             nums = re.findall(r"\d+", seriya_num)
             nums = [int(i) for i in nums]
             seriya_num = nums
+            md_file.seek(0)
+
+            print("seriya:")
+            print(seriya)
+            md_file.seek(0)
+            break
+
+    for md_string in md_file:
 
         if "Автор(ы):" in md_string:
-            authors = md_string
-            authors = authors.replace("Автор(ы): ", "")
+            authors = md_string.replace("Автор(ы): ", "")
+            print("authors:")
+            print(authors)
+            md_file.seek(0)
+            break
+
+        # else:
+        #     authors = "Неизвестный"
+        #     md_file.seek(0)
+        #     break
 
         # В данном случае происходит забор строки, далее она "очищается" от
         # ненужных символов, после чего конвертируется в список, который, в
         # свою очередь переворачивается задом на перёд. В конце-концов
         # создаётся строка, разделителем в которой является символ "-".
+
+    for md_string in md_file:
+
         if "Дата публикации статьи:" in md_string:
             date = md_string
             date = (
-                date.replace("Дата публикации статьи: ", "")
-                .replace("\n", "")
-                .replace(" ", "")
+                date.strip("Дата публикации статьи: ")
+                .strip("\n")
+                .strip(" ")
             )
             date = date.split(".")[::-1]
             date = "-".join(date)
+            md_file.seek(0)
+            break
 
+    for md_string in md_file:
         if "Теги: " in md_string:
             tags = md_string
-            tags = tags.replace("Теги: ", "")
-        # else:
-        #     tags = "no_tags"
+            tags = tags.strip("Теги: ")
+            md_file.seek(0)
+            break
 
-# --------------------------------------------------
-# maker
-# --------------------------------------------------
+    # --------------------------------------------------
+    # maker
+    # --------------------------------------------------
 
     # В данном случае задействован метод split(), позволяющий трансформировать
     # строку в список. В качестве "разделителя" указан "&":
+
     authors_list = authors.split("&")
 
     second_authors_list = []
@@ -83,6 +111,7 @@ while n < len(md_directory):
         authors_reversed.append(reversed_author)
 
     opf_file_name = md_file.name.replace("md/", "").replace(".md", ".opf")
+
     opf_file = open(("./" + opf_file_name), "w+")
     opf_head = open("/home/vostorg/sandbox/python/parser/head.opf", "r")
 
@@ -98,16 +127,20 @@ while n < len(md_directory):
     # Данный цикл позволяет забрать список авторов и изменить разделитель его
     # элементов на необходимый : (' &amp; '.join(authors_list)) - &amp в данном
     # случае как раз и является указываемым делителем.
+
     i = 0
-    while i < len(authors_list):
-        opf_file.write(
-            '<dc:creator opf:file-as="'
-            + (" &amp; ".join(authors_reversed))
-            + '" opf:role="aut">'
-            + authors_list[i]
-            + "</dc:creator>\n"
-        )
-        i = i + 1
+
+    if authors != "":
+
+        while i < len(authors_list):
+            opf_file.write(
+                '<dc:creator opf:file-as="'
+                + (" &amp; ".join(authors_reversed))
+                + '" opf:role="aut">'
+                + authors_list[i]
+                + "</dc:creator>\n"
+            )
+            i = i + 1
 
     contribution = open("/home/vostorg/sandbox/python/parser/contribution.opf", "r")
     opf_file.write(contribution.read())
@@ -127,56 +160,69 @@ while n < len(md_directory):
     # Добавление тегов:
     tags_list = tags.split(", ")
     for i in tags_list:
-        i = i.replace("\n", "")
+        i = i.strip("\n")
         opf_file.write("<dc:subject>" + i + "</dc:subject>\n")
 
     opf_file.write("\n")
 
-    if len(authors_list) == 1:
+    # А вот из этого ужаса нужно однозначно делать функцию.
+
+    if authors == "Неизвестный":
         opf_file.write(
             ' <meta name="calibre:author_link_map"\
     content="{&quot;'
-            + authors_list[0]
+            + "Неизвестный"
             + '&quot;: &quot;&quot;}"/> '
         )
 
-    if len(authors_list) == 2:
-        opf_file.write(
-            '<meta name="calibre:author_link_map" content=\
-    "{&quot;'
-            + authors_list[0]
-            + "&quot;: &quot;&quot;, \
-    &quot;"
-            + authors_list[1]
-            + '&quot;: &quot;&quot;}"/>'
-        )
+    else:
+        if authors != "":
 
-    # Добавление author link. Обязательно переделать на что-то более пристойное!
-    if len(authors_list) == 3:
-        opf_file.write(
-            ' <meta name="calibre:author_link_map" content="{&quot;'
-            + authors_list[0]
-            + "&quot;: &quot;&quot;, &quot;"
-            + authors_list[1]
-            + "&quot;: &quot;&quot;, &quot;"
-            + authors_list[2]
-            + ' &quot;: &quot;&quot;}"/>\n'
-        )
+            if len(authors_list) == 1 and authors != "Неизвестный" :
+                opf_file.write(
+                    ' <meta name="calibre:author_link_map"\
+            content="{&quot;'
+                    + authors_list[0]
+                    + '&quot;: &quot;&quot;}"/> '
+                )
 
-    if len(authors_list) == 4:
-        opf_file.write(
-            ' <meta name="calibre:author_link_map" content="{&quot;'
-            + authors_list[0]
-            + "&quot;: &quot;&quot;, &quot;"
-            + authors_list[1]
-            + "&quot;: &quot;&quot;, &quot;"
-            + authors_list[2]
-            + "&quot;: &quot;&quot;, &quot;"
-            + authors_list[3]
-            + ' &quot;: &quot;&quot;}"/>\n'
-        )
+            if len(authors_list) == 2:
+                opf_file.write(
+                    '<meta name="calibre:author_link_map" content=\
+            "{&quot;'
+                    + authors_list[0]
+                    + "&quot;: &quot;&quot;, \
+            &quot;"
+                    + authors_list[1]
+                    + '&quot;: &quot;&quot;}"/>'
+                )
 
-    opf_file.write("\n")
+            # Добавление author link. Обязательно переделать на что-то более пристойное!
+            if len(authors_list) == 3:
+                opf_file.write(
+                    ' <meta name="calibre:author_link_map" content="{&quot;'
+                    + authors_list[0]
+                    + "&quot;: &quot;&quot;, &quot;"
+                    + authors_list[1]
+                    + "&quot;: &quot;&quot;, &quot;"
+                    + authors_list[2]
+                    + ' &quot;: &quot;&quot;}"/>\n'
+                )
+
+            if len(authors_list) == 4:
+                opf_file.write(
+                    ' <meta name="calibre:author_link_map" content="{&quot;'
+                    + authors_list[0]
+                    + "&quot;: &quot;&quot;, &quot;"
+                    + authors_list[1]
+                    + "&quot;: &quot;&quot;, &quot;"
+                    + authors_list[2]
+                    + "&quot;: &quot;&quot;, &quot;"
+                    + authors_list[3]
+                    + ' &quot;: &quot;&quot;}"/>\n'
+                )
+
+            opf_file.write("\n")
 
     if "Ведомости" in seriya:
         seriya = "Ведомости"
@@ -191,7 +237,7 @@ while n < len(md_directory):
             '<meta name="calibre:series_index" content="' + str(*seriya_num) + '"/>\n\n'
         )
 
-    # Сделать временной штамп динамичным
+    # Сделать временной штамп динамичным?
     opf_file.write(
         '<meta name="calibre:timestamp"\
      content="'
@@ -225,6 +271,6 @@ for file in os.listdir(directory):
 
 
 for file in md_files_list:
-    project = Markdown2docx(directory + file.replace(".md", ""))
+    project = Markdown2docx(directory + file.strip(".md"))
     project.eat_soup()
     project.save()
